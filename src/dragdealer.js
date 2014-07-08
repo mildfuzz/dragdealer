@@ -204,6 +204,7 @@ Dragdealer.prototype = {
     vertical: false,
     slide: true,
     steps: 0,
+    nudgeValue: 0.05,
     snap: false,
     loose: false,
     speed: 0.1,
@@ -216,6 +217,7 @@ Dragdealer.prototype = {
     tapping: true
   },
   init: function() {
+    window.drag = this;
     if (this.options.css3) {
       triggerWebkitHardwareAcceleration(this.handle);
     }
@@ -332,6 +334,7 @@ Dragdealer.prototype = {
     this.onDocumentTouchEnd = bind(this.onDocumentTouchEnd, this);
     this.onHandleClick = bind(this.onHandleClick, this);
     this.onWindowResize = bind(this.onWindowResize, this);
+    this.onKeyPress = bind(this.onKeyPress, this);
   },
   bindEventListeners: function() {
     // Start dragging
@@ -349,6 +352,12 @@ Dragdealer.prototype = {
 
     addEventListener(this.handle, 'click', this.onHandleClick);
     addEventListener(window, 'resize', this.onWindowResize);
+
+
+    //listen for keypresses
+    addEventListener(document, 'keydown', this.onKeyPress);
+
+    this.interval = setInterval(this.animate.bind(this), 25);
 
     this.animate(false, true);
     if (this.options.requestAnimationFrame) {
@@ -369,6 +378,7 @@ Dragdealer.prototype = {
     removeEventListener(document, 'touchend', this.onDocumentTouchEnd);
     removeEventListener(this.handle, 'click', this.onHandleClick);
     removeEventListener(window, 'resize', this.onWindowResize);
+    removeEventListener(document, 'keypress', this.onKeyPress);
     if (this.options.requestAnimationFrame) {
       cancelAnimationFrame(this.interval);
     } else {
@@ -397,6 +407,9 @@ Dragdealer.prototype = {
     if (this.dragging) {
       this.activity = true;
     }
+  },
+  onKeyPress: function(e) {
+    this.nudgeWithKey(e.keyCode);
   },
   onWrapperTouchMove: function(e) {
     Cursor.refresh(e);
@@ -555,7 +568,7 @@ Dragdealer.prototype = {
       this.options.callback.call(this, this.value.target[0], this.value.target[1]);
     }
   },
-  animateWithRequestAnimationFrame: function (time) {
+  animateWithRequestAnimationFrame: function(time) {
     if (time) {
       // using requestAnimationFrame
       this.timeOffset = this.timeStamp ? time - this.timeStamp : 0;
@@ -609,6 +622,24 @@ Dragdealer.prototype = {
       this.groupCopy(this.value.current, this.value.target);
     }
     return true;
+  },
+  nudgeWithKey: function(key) {
+    var x = this.value.current[0], y = this.value.current[1], nudge = this.options.nudgeValue;
+    switch (key) {
+      case 37:
+        x = x - nudge < 0 ? 0 : x - nudge;
+      break;
+      case 39:
+        x = x + nudge > 1 ? 1 : x + nudge;
+      break;
+      case 38:
+        y = y - nudge < 0 ? 0 : y - nudge;
+      break;
+      case 40:
+        y = y + nudge > 1 ? 1 : y + nudge;
+      break;
+    }
+    this.setValue(x, y);
   },
   updateOffsetFromValue: function() {
     if (!this.options.snap) {
