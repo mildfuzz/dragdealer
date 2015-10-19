@@ -452,12 +452,27 @@ Dragdealer.prototype = {
   onWrapperMouseDown: function(e) {
     Cursor.refresh(e);
     preventEventDefaults(e);
-    this.startTap();
+    if (this.options.jumpOnWrapper) {
+      this.jumpToCursor();
+    } else {
+      this.startTap();
+    }
+  },
+  jumpToCursor: function() {
+    var wrapperOffset = this.wrapper.getBoundingClientRect(),
+        handleSize = this.handle.getBoundingClientRect(),
+        value = this.getRatiosByOffsets([Cursor.x - wrapperOffset.left - (handleSize.height / 2), Cursor.y - wrapperOffset.top - (handleSize.width / 2)]);
+    this.setValue(value[0], value[1], true);
+
   },
   onWrapperTouchStart: function(e) {
     Cursor.refresh(e);
     preventEventDefaults(e);
-    this.startTap();
+    if (this.options.jumpOnWrapper) {
+      this.jumpToCursor();
+    } else {
+      this.startTap();
+    }
   },
   onDocumentMouseUp: function(e) {
     this.stopDrag();
