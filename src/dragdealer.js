@@ -214,7 +214,8 @@ Dragdealer.prototype = {
     css3: true,
     requestAnimationFrame: false,
     activeClass: 'active',
-    tapping: true
+    tapping: true,
+    passThroughHoverClass: 'hover'
   },
   init: function() {
     window.drag = this;
@@ -278,14 +279,14 @@ Dragdealer.prototype = {
       };
     }.bind(this));
   },
-  shouldPromoteClickToNode: function(e) {
+  getNodeBeneath: function(e) {
       var zone,
           promote = false,
           i = 0;
       this.assignClickThroughZones();
       while (!promote && i < this.options.clickThroughZones.length) {
           zone = this.options.clickThroughZones[i].zone;
-          if (Cursor.x >= zone.top && Cursor.x <= (zone.top + zone.height) && Cursor.y >= zone.left && Cursor.y <= (zone.left + zone.width)) {
+          if (Cursor.y >= zone.top && Cursor.y <= (zone.top + zone.height) && Cursor.x >= zone.left && Cursor.x <= (zone.left + zone.width)) {
             promote = this.options.clickThroughZones[i].node;
           }
           i++;
@@ -367,6 +368,7 @@ Dragdealer.prototype = {
     this.onHandleClick = bind(this.onHandleClick, this);
     this.onWindowResize = bind(this.onWindowResize, this);
     this.onKeyPress = bind(this.onKeyPress, this);
+
   },
   bindEventListeners: function() {
     // Start dragging
@@ -388,6 +390,7 @@ Dragdealer.prototype = {
 
     //listen for keypresses
     addEventListener(document, 'keydown', this.onKeyPress);
+
 
     this.interval = setInterval(this.animate.bind(this), 25);
 
@@ -438,7 +441,25 @@ Dragdealer.prototype = {
     Cursor.refresh(e);
     if (this.dragging) {
       this.activity = true;
+    } else {
+      this.doPassThroughHover(e);
     }
+    
+    
+  },
+  doPassThroughHover: function(e) {
+      var nodeBeneath = this.getNodeBeneath(e);
+      if (this.passThroughHoverClass && this.passThroughHoverClass !== nodeBeneath) {
+        this.passThroughHoverClass.classList.remove(this.options.passThroughHoverClass);
+        this.passThroughHoverClass = null;
+      }
+      if (nodeBeneath) {
+        this.passThroughHoverClass = nodeBeneath;
+        this.passThroughHoverClass.classList.add(this.options.passThroughHoverClass);
+        this.wrapper.classList.add('has-hover-pass-through');
+      } else {
+        this.wrapper.classList.remove('has-hover-pass-through');
+      }
   },
   onKeyPress: function(e) {
     this.nudgeWithKey(e.keyCode);
@@ -459,7 +480,7 @@ Dragdealer.prototype = {
       if (this.dragging) {
         this.stopDrag();
       }
-      return;
+      
     }
     // Read comment in `onHandleTouchStart` above, to understand why we're
     // preventing defaults here and not there
@@ -469,7 +490,7 @@ Dragdealer.prototype = {
   onWrapperMouseDown: function(e) {
     Cursor.refresh(e);
     preventEventDefaults(e);
-    var promoteClickToNode = this.shouldPromoteClickToNode(e);
+    var promoteClickToNode = this.getNodeBeneath(e);
 
     if (promoteClickToNode) {
       promoteClickToNode.click();
@@ -491,7 +512,7 @@ Dragdealer.prototype = {
     Cursor.refresh(e);
     preventEventDefaults(e);
 
-    var promoteClickToNode = this.shouldPromoteClickToNode(e);
+    var promoteClickToNode = this.getNodeBeneath(e);
 
     if (promoteClickToNode) {
       promoteClickToNode.click();
