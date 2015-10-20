@@ -411,6 +411,12 @@ Dragdealer.prototype = {
   onKeyPress: function(e) {
     this.nudgeWithKey(e.keyCode);
   },
+  startListeningToKeys: function() {
+      addEventListener(document, 'keydown', this.onKeyPress);
+  },
+  stopListeningToKeys: function() {
+      removeEventListener(document, 'keydown', this.onKeyPress);
+  },
   onWrapperTouchMove: function(e) {
     Cursor.refresh(e);
     // Dragging on a disabled axis (horizontal or vertical) shouldn't prevent
